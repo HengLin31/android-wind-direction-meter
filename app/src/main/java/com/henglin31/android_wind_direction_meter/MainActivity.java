@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
@@ -23,83 +26,61 @@ import com.google.gson.Gson;
 import com.henglin31.android_wind_direction_meter.api.GetWindDirectionMeterData;
 import com.henglin31.android_wind_direction_meter.api.ThreadCallback;
 import com.henglin31.android_wind_direction_meter.bean.LocationData;
+import com.henglin31.android_wind_direction_meter.fragment.DashboardFragment;
+import com.henglin31.android_wind_direction_meter.fragment.HomeFragment;
+import com.henglin31.android_wind_direction_meter.fragment.NotificationFragment;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ViewPager.OnPageChangeListener {
     private static final String TAG = "MainActivity";
-    private final int JOB_ID = 123;
+    private final int JOB_ID = 123456789;
 
-    private final ExecutorService service = Executors.newSingleThreadExecutor();
+    private BottomNavigationView navigation;
+    private ViewPager viewPager;
 
-    private TextView mTextMessage;
-    private Button sendBtn;
-    private ImageView windDirectionImg;
+    private HomeFragment homeFragment = new HomeFragment();
+    private DashboardFragment dashboardFragment = new DashboardFragment();
+    private NotificationFragment notificationFragment = new NotificationFragment();
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            switch (item.getItemId()) {
-                case R.id.navigation_home:
-                    mTextMessage.setText(R.string.title_home);
-                    return true;
-                case R.id.navigation_dashboard:
-                    mTextMessage.setText(R.string.title_dashboard);
-                    return true;
-                case R.id.navigation_notifications:
-                    mTextMessage.setText(R.string.title_notifications);
-                    return true;
-            }
-            return false;
-        }
-    };
-
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
-
-        mTextMessage = findViewById(R.id.message);
-        BottomNavigationView navigation = findViewById(R.id.navigation);
+        viewPager = findViewById(R.id.viewPager);
+        viewPager.addOnPageChangeListener(this);
+        navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
-        //windDirectionImg = findViewById(R.id.wind_direction_img);
-        //windDirectionImg.setImageBitmap(rotation(100));
-
-        sendBtn = findViewById(R.id.test_api);
-        sendBtn.setOnClickListener(new View.OnClickListener() {
+        viewPager.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
-            public void onClick(View v) {
-                service.submit(new GetWindDirectionMeterData(new ThreadCallback<LocationData>() {
-                    @Override
-                    public void callback(final LocationData locationData) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mTextMessage.setText(new Gson().toJson(locationData.getWeatherElement()));
-                            }
-                        });
-                    }
-                }));
+            public Fragment getItem(int position) {
+                switch (position) {
+                    case 0:
+                        return homeFragment;
+                    case 1:
+                        return dashboardFragment;
+                    case 2:
+                        return notificationFragment;
+                }
+                return null;
+            }
+
+            @Override
+            public int getCount() {
+                return 3;
             }
         });
 
-
-    }
-
-    public void updateImage(View v){
-        windDirectionImg = findViewById(R.id.wind_direction_img);
-        windDirectionImg.setImageBitmap(rotation(new Random().nextInt(359)));
+        scheduleJob();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void scheduleJob(View v){
+    private void scheduleJob(){
         ComponentName componentName = new ComponentName(this, RequestJobService.class);
         JobInfo info = new JobInfo.Builder(JOB_ID, componentName)
                 .setRequiresCharging(true)
@@ -116,19 +97,36 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void cancelJob(View v){
+    public void cancelJob(){
         JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
         scheduler.cancel(JOB_ID);
         Log.d(TAG, "job cancel");
     }
 
-    private Bitmap rotation(int degree){
-        Bitmap picture = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher_round);
-        Matrix matrix = new Matrix();
-        matrix.postRotate(degree);
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(picture,picture.getWidth(),picture.getHeight(),true);
-        return Bitmap.createBitmap(scaledBitmap , 0, 0, scaledBitmap .getWidth(), scaledBitmap .getHeight(), matrix, true);
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            viewPager.setCurrentItem(item.getOrder());
+            return true;
+        }
+
+    };
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        navigation.getMenu().getItem(position).setChecked(true);
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
     }
 }
