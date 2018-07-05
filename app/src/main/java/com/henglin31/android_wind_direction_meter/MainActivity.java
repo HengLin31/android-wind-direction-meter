@@ -15,21 +15,29 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.recyclerview.extensions.ListAdapter;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.henglin31.android_wind_direction_meter.api.GetWindDirectionMeterData;
 import com.henglin31.android_wind_direction_meter.api.ThreadCallback;
+import com.henglin31.android_wind_direction_meter.bean.CheckboxListAdapter;
 import com.henglin31.android_wind_direction_meter.bean.LocationData;
 import com.henglin31.android_wind_direction_meter.fragment.DashboardFragment;
 import com.henglin31.android_wind_direction_meter.fragment.HomeFragment;
 import com.henglin31.android_wind_direction_meter.fragment.NotificationFragment;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -76,7 +84,17 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
             }
         });
 
+
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void startScheduleJob(){
         scheduleJob();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    public void cancelScheduleJob(){
+        cancelJob();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -98,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements ViewPager.OnPageC
     }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    public void cancelJob(){
+    private void cancelJob(){
         JobScheduler scheduler = (JobScheduler) getSystemService(JOB_SCHEDULER_SERVICE);
         scheduler.cancel(JOB_ID);
         Log.d(TAG, "job cancel");

@@ -12,18 +12,40 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 
+import com.google.gson.Gson;
 import com.henglin31.android_wind_direction_meter.api.GetWindDirectionMeterData;
 import com.henglin31.android_wind_direction_meter.api.ThreadCallback;
 import com.henglin31.android_wind_direction_meter.bean.LocationData;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 public class RequestJobService extends JobService {
-    private static final String TAG = "RequestJobService";
+    private final static String TAG = "RequestJobService";
+    private final static String WIND_NAME_KEY = "WIND_NAME";
     private boolean jobCancelled = false;
-    //private static final long[] VIBRATE_PATTERN = {0, 300, 200, 300, 200, 300};
+
+    private static final CopyOnWriteArraySet<String> CURRENT_SELECT_WIND_NAME_SET = new CopyOnWriteArraySet<>();
+
+//    public static void updateWindNames(List<String> windNames){
+//        CURRENT_SELECT_WIND_NAME_SET.clear();
+//        CURRENT_SELECT_WIND_NAME_SET.addAll(windNames);
+//    }
+
+    public static void addWindName(String windName){
+        CURRENT_SELECT_WIND_NAME_SET.add(windName);
+    }
+
+    public static void removeWindName(String windName){
+        if(CURRENT_SELECT_WIND_NAME_SET.contains(windName)){
+            CURRENT_SELECT_WIND_NAME_SET.remove(windName);
+        }
+    }
 
     @Override
     public boolean onStartJob(JobParameters params) {
@@ -46,8 +68,12 @@ public class RequestJobService extends JobService {
         new Thread(new GetWindDirectionMeterData(new ThreadCallback<LocationData>() {
             @Override
             public void callback(LocationData locationData) {
-                locationData.getWeatherElement();
-                notification(String.valueOf(new Random().nextInt(100)));
+                Map<String, String> weatherMap = locationData.getWeatherElement();
+                Log.d(TAG, new Gson().toJson(locationData.getWeatherElement()));
+                if(weatherMap.containsKey(WIND_NAME_KEY) &&
+                        CURRENT_SELECT_WIND_NAME_SET.contains(weatherMap.get(WIND_NAME_KEY))){
+                    notification(weatherMap.get(WIND_NAME_KEY));
+                }
                 Log.d(TAG, "job finished");
                 jobFinished(params, false);
             }

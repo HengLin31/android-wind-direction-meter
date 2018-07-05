@@ -8,6 +8,7 @@ public class LocationData {
     private final static String ELEMENT_NAME = "elementName";
     private final static String ELEMENT_VALUE = "elementValue";
     private final static String WIND_ELEMENT_NAME = "WDIR";
+    private final static String WIND_NAME_KEY = "WIND_NAME";
 
     private String lat;
     private String lon;
@@ -42,7 +43,7 @@ public class LocationData {
             result.put(ele.get(ELEMENT_NAME).toString(), ele.get(ELEMENT_VALUE).toString());
             if(ele.get(ELEMENT_NAME).toString().equals(WIND_ELEMENT_NAME)){
                 float degree = Float.parseFloat(ele.get(ELEMENT_VALUE).toString());
-                result.put("WIND_NAME", windDirection(degree));
+                result.put(WIND_NAME_KEY, windDirection(degree));
             }
         }
         return result;
