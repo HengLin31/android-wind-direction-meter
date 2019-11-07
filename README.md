@@ -1,2 +1,2 @@
 # android-wind-direction-meter
-Just for Taixi, Yunlin
+It is used to monitor Taixi weather about wind direction
